@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <script type="application/javascript"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+    <script>
+        function draw() {
+            var canvas = document.getElementById('canevas');
+            if (canvas.getContext) {
+                var ctx = canvas.getContext('2d');
+
+                //Text
+                var gradient_text = ctx.createRadialGradient({{text.gradient_0_x}}, {{text.gradient_0_y}},
+                {{text.gradient_r_0}}, {{text.gradient_1_x}}, {{text.gradient_1_y}}, {{text.gradient_r_1}});
+                gradient_text.addColorStop(0, "rgb({{text.starting_color_r}}," +
+                    "                              {{text.starting_color_g}}," +
+                    "                              {{text.starting_color_b}}");
+                gradient_text.addColorStop(1, "rgb({{text.end_color_r}}," +
+                    "                              {{text.end_color_g}}," +
+                    "                              {{text.end_color_b}}");
+                ctx.shadowColor = "rgb({{text.shadow_color_r}}," +
+                    "                  {{text.shadow_color_g}}," +
+                    "                  {{text.shadow_color_b}})";
+                ctx.shadowBlur ={{text.shadow_blur}}
+
+
+                ctx.font = "{{text.font_size}}px Georgia";
+                ctx.fillStyle = gradient_text;
+                ctx.fillText("42", {{text.fillText_start}}, {{text.fillText_end}});
+
+                //Arc
+                var gradient_arc = ctx.createRadialGradient({{arc.gradient_0_x}}, {{arc.gradient_0_y}},
+                {{arc.gradient_r_0}}, {{arc.gradient_1_x}}, {{arc.gradient_1_y}}, {{arc.gradient_r_1}});
+                gradient_arc.addColorStop(0, "rgb({{arc.starting_color_r}}," +
+                    "                              {{arc.starting_color_g}}," +
+                    "                              {{arc.starting_color_b}}");
+                gradient_arc.addColorStop(1, "rgb({{arc.end_color_r}}," +
+                    "                              {{arc.end_color_g}}," +
+                    "                              {{arc.end_color_b}})");
+                ctx.shadowColor = "rgb({{arc.shadow_color_r}}," +
+                    "                  {{arc.shadow_color_g}}," +
+                    "                  {{arc.shadow_color_b}})";
+                ctx.shadowBlur ={{arc.shadow_blur}}
+
+
+                ctx.arc({{arc.start_x}},{{arc.start_y}}, {{arc.radius}},
+                        {{arc.angle_start}}*Math.PI, {{arc.angle_end}}*Math.PI);
+                ctx.fillStyle = gradient_arc;
+                ctx.fill();
+
+                //Bezier Curve
+                var gradient_bezier = ctx.createRadialGradient({{bezier.gradient_0_x}}, {{bezier.gradient_0_y}},
+                {{bezier.gradient_r_0}}, {{bezier.gradient_1_x}}, {{bezier.gradient_1_y}}, {{bezier.gradient_r_1}});
+                gradient_bezier.addColorStop(0, "rgb({{bezier.starting_color_r}}," +
+                    "                              {{bezier.starting_color_g}}," +
+                    "                              {{bezier.starting_color_b}}");
+                gradient_bezier.addColorStop(1, "rgb({{bezier.end_color_r}}," +
+                    "                              {{bezier.end_color_g}}," +
+                    "                              {{bezier.end_color_b}})");
+                ctx.shadowColor = "rgb({{bezier.shadow_color_r}}," +
+                    "                  {{bezier.shadow_color_g}}," +
+                    "                  {{bezier.shadow_color_b}})";
+                ctx.shadowBlur ={{bezier.shadow_blur}}
+
+                ctx.beginPath();
+                ctx.moveTo({{bezier.start_x}}, {{bezier.start_y}});
+                ctx.bezierCurveTo({{bezier.cp1x}}, {{bezier.cp1y}}, {{bezier.cp2x}}, {{bezier.cp2y}},
+                                {{bezier.x}}, {{bezier.y}});
+                ctx.fillStyle = gradient_bezier
+                ctx.fill()
+                ctx.stroke()
+
+                //Quadratic Curve
+                var gradient_quadratic = ctx.createRadialGradient({{quadratic.gradient_0_x}}, {{quadratic.gradient_0_y}},
+                {{quadratic.gradient_r_0}}, {{quadratic.gradient_1_x}}, {{quadratic.gradient_1_y}}, {{quadratic.gradient_r_1}});
+                gradient_quadratic.addColorStop(0, "rgb({{quadratic.starting_color_r}}," +
+                    "                              {{quadratic.starting_color_g}}," +
+                    "                              {{quadratic.starting_color_b}}");
+                gradient_quadratic.addColorStop(1, "rgb({{quadratic.end_color_r}}," +
+                    "                              {{quadratic.end_color_g}}," +
+                    "                              {{quadratic.end_color_b}})");
+                ctx.shadowColor = "rgb({{quadratic.shadow_color_r}}," +
+                    "                  {{quadratic.shadow_color_g}}," +
+                    "                  {{quadratic.shadow_color_b}})";
+                ctx.shadowBlur ={{quadratic.shadow_blur}}
+
+                ctx.beginPath();
+                ctx.moveTo({{quadratic.start_x}}, {{quadratic.start_y}});
+                ctx.quadraticCurveTo({{quadratic.cpx}}, {{quadratic.cpy}}, {{quadratic.x}}, {{quadratic.y}});
+                ctx.stroke();
+                ctx.fillStyle = gradient_quadratic
+                ctx.fill()
+
+            }
+
+            // Upload on S3
+            AWS.config.update({
+                accessKeyId: "YOUR ACCESS KEY",
+                secretAccessKey: "YOUR SECRET"
+            });
+            AWS.config.region = 'eu-west-1';
+            var bucket = new AWS.S3({params: {Bucket: 'image-html-rendered'}});
+
+            var dataUrl = canevas.toDataURL("image/jpeg");
+            var blobData = dataURItoBlob(dataUrl);
+            var params = {Key: 'seed_{{seed}}_timestamp_{{timestamp}}.jpg', ContentType: "image/jpeg", Body: blobData};
+            bucket.upload(params, function (err, data) {
+                console.log(data);
+                console.log(err ? 'ERROR!' : 'UPLOADED.');
+            });
+        }
+
+        function dataURItoBlob(dataURI) {
+            var binary = atob(dataURI.split(',')[1]);
+            var array = [];
+            for (var i = 0; i < binary.length; i++) {
+                array.push(binary.charCodeAt(i));
+            }
+            return new Blob([new Uint8Array(array)], {type: 'image/jpeg'});
+        }
+    </script>
+
+
+</head>
+<body onload="draw();">
+<canvas id="canevas" width="200" height="200"></canvas>
+
+</body>
+</html>
